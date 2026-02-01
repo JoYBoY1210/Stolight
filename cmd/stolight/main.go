@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/joyboy1210/stolight/config"
 	"github.com/joyboy1210/stolight/db"
+	"github.com/joyboy1210/stolight/handlers"
 )
 
 func main() {
@@ -28,6 +30,15 @@ func main() {
 	fmt.Println("tables created successfully")
 
 	fmt.Println("system started successfully")
-	select {}
+
+	uploadHandler := &handlers.UploadHandler{
+		Db:     Db,
+		Config: cfg,
+	}
+	http.HandleFunc("/upload", uploadHandler.UploadHandlerAPI)
+	fmt.Printf("Listening on :%d\n", cfg.ServerPort)
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.ServerPort), nil); err != nil {
+		log.Fatalf("Server crashed: %v", err)
+	}
 
 }
