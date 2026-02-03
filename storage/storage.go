@@ -8,20 +8,20 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joyboy1210/stolight/models"
-	"gorm.io/gorm"
 )
 
 const ChunkSize = 10 * 1024 * 1024
 
-func SplitFile(db *gorm.DB, fileName string, fileSize int64, src io.Reader, nodes []string) error {
+func SplitFile(fileName string, fileSize int64, src io.Reader, nodes []string) error {
 	fileId := uuid.New().String()
 	fileRecord := models.File{
 		ID:   fileId,
 		Name: fileName,
 		Size: fileSize,
 	}
-	if err := db.Create(&fileRecord).Error; err != nil {
-		return err
+	err := models.CreateFile(&fileRecord)
+	if err != nil {
+		return fmt.Errorf("failed to create file record: %w", err)
 	}
 	buffer := make([]byte, ChunkSize)
 	seq := 0
@@ -49,8 +49,9 @@ func SplitFile(db *gorm.DB, fileName string, fileSize int64, src io.Reader, node
 			StorageNodeId: targetNode,
 		}
 
-		if err := db.Create(&chunkRecord).Error; err != nil {
-			return fmt.Errorf("failed to save chunk meta: %w", err)
+		err = models.CreateChunkMetaData(&chunkRecord)
+		if err != nil {
+			return fmt.Errorf("failed to create chunk metadata: %w", err)
 		}
 		fmt.Printf("Chunk %d went to node %s\n", seq, targetNode)
 		seq++
@@ -60,23 +61,23 @@ func SplitFile(db *gorm.DB, fileName string, fileSize int64, src io.Reader, node
 
 }
 
-func MergeFile(db *gorm.DB, fileId string, dest io.Writer) error {
+func MergeFile(fileId string, dest io.Writer) error {
 	var chunks []models.ChunkMetaData
-	if err := db.Where("file_id=?", fileId).Order("chunk_index asc").Find(&chunks); err.Error != nil {
-
-		return fmt.Errorf("could not get the file parts from DB")
+	chunks, err := models.GetChunksByFileID(fileId)
+	if err != nil {
+		return fmt.Errorf("could not get chunks for file %s: %w", fileId, err)
 	}
 	for _, chunk := range chunks {
 		chunkFileName := fmt.Sprintf("chunk_%s_%d", chunk.ID, chunk.ChunkIndex)
 		chunkPath := filepath.Join(chunk.StorageNodeId, chunkFileName)
 
-		file, err := os.Open(chunkPath)		
+		file, err := os.Open(chunkPath)
 		if err != nil {
 			return fmt.Errorf("could not open chunk file %s: %w", chunkPath, err)
 		}
 		defer file.Close()
 		_, err = io.Copy(dest, file)
-		
+
 		if err != nil {
 			return fmt.Errorf("could not write chunk data to dest: %w", err)
 		}

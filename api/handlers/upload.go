@@ -8,15 +8,9 @@ import (
 
 	"github.com/joyboy1210/stolight/config"
 	"github.com/joyboy1210/stolight/storage"
-	"gorm.io/gorm"
 )
 
-type UploadHandler struct {
-	Db     *gorm.DB
-	Config *config.Config
-}
-
-func (u *UploadHandler) UploadHandlerAPI(w http.ResponseWriter, r *http.Request) {
+func UploadHandlerAPI(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
@@ -29,7 +23,8 @@ func (u *UploadHandler) UploadHandlerAPI(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	defer file.Close()
-	err = storage.SplitFile(u.Db, header.Filename, header.Size, file, u.Config.StorageNodes)
+	nodes := config.Cfg.StorageNodes
+	err = storage.SplitFile(header.Filename, header.Size, file, nodes)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Storage failed: %v", err), http.StatusInternalServerError)
 		return

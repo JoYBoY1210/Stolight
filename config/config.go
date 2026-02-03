@@ -13,6 +13,9 @@ type Config struct {
 	DBPath       string   `json:"db_path"`
 }
 
+// global var as i want to load conifg only once but want to use it in every API
+var Cfg *Config
+
 func LoadConfig() *Config {
 	var cfg Config
 	file, err := os.ReadFile("config.json")
@@ -31,4 +34,8 @@ func LoadConfig() *Config {
 	}
 	fmt.Println("config loaded successfully")
 	return &cfg
+}
+
+func init() {
+	Cfg = LoadConfig()
 }
