@@ -59,3 +59,25 @@ func SplitFile(db *gorm.DB, fileName string, fileSize int64, src io.Reader, node
 	return nil
 
 }
+
+func MergeFile(db *gorm.DB, fileId string, dest io.Writer) error {
+	var chunks []models.ChunkMetaData
+	if err := db.Where("file_id=?", fileId).Order("chunk_index asc").Find(&chunks); err.Error != nil {
+
+		return fmt.Errorf("could not get the file parts from DB")
+	}
+	for _, chunk := range chunks {
+		chunkFileName := fmt.Sprintf("chunk_%s_%d", chunk.ID, chunk.ChunkIndex)
+		chunkPath := filepath.Join(chunk.StorageNodeId, chunkFileName)
+
+		data, err := os.ReadFile(chunkPath)
+		if err != nil {
+			return fmt.Errorf("could not read chunk file %s: %w", chunkPath, err)
+		}
+		_, err = dest.Write(data)
+		if err != nil {
+			return fmt.Errorf("could not write chunk data to dest: %w", err)
+		}
+	}
+	return nil
+}

@@ -35,7 +35,11 @@ func main() {
 		Db:     Db,
 		Config: cfg,
 	}
+	downloadHandler := &handlers.DownloadRequest{
+		Db: Db,
+	}
 	http.HandleFunc("/upload", uploadHandler.UploadHandlerAPI)
+	http.HandleFunc("/download/", downloadHandler.DownloadHandler)
 	fmt.Printf("Listening on :%d\n", cfg.ServerPort)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.ServerPort), nil); err != nil {
 		log.Fatalf("Server crashed: %v", err)
