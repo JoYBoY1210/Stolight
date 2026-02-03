@@ -70,11 +70,13 @@ func MergeFile(db *gorm.DB, fileId string, dest io.Writer) error {
 		chunkFileName := fmt.Sprintf("chunk_%s_%d", chunk.ID, chunk.ChunkIndex)
 		chunkPath := filepath.Join(chunk.StorageNodeId, chunkFileName)
 
-		data, err := os.ReadFile(chunkPath)
+		file, err := os.Open(chunkPath)		
 		if err != nil {
-			return fmt.Errorf("could not read chunk file %s: %w", chunkPath, err)
+			return fmt.Errorf("could not open chunk file %s: %w", chunkPath, err)
 		}
-		_, err = dest.Write(data)
+		defer file.Close()
+		_, err = io.Copy(dest, file)
+		
 		if err != nil {
 			return fmt.Errorf("could not write chunk data to dest: %w", err)
 		}
