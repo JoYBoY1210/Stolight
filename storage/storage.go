@@ -12,14 +12,21 @@ import (
 
 const ChunkSize = 10 * 1024 * 1024
 
-func SplitFile(fileName string, fileSize int64, src io.Reader, nodes []string) error {
+func SplitFile(fileName string, fileSize int64, src io.Reader, nodes []string, bucketName string) error {
+
+	bucketId, err := models.GetBucketByName(bucketName)
+	if err != nil {
+		return fmt.Errorf("failed to get bucket id: %w", err)
+	}
+
 	fileId := uuid.New().String()
 	fileRecord := models.File{
-		ID:   fileId,
-		Name: fileName,
-		Size: fileSize,
+		ID:       fileId,
+		Name:     fileName,
+		Size:     fileSize,
+		BucketID: bucketId.ID,
 	}
-	err := models.CreateFile(&fileRecord)
+	err = models.CreateFile(&fileRecord)
 	if err != nil {
 		return fmt.Errorf("failed to create file record: %w", err)
 	}
