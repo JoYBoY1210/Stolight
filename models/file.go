@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type File struct {
 	ID        string `gorm:"primaryKey"`
@@ -36,4 +39,16 @@ func GetFilesByBucketID(bucketID string) ([]File, error) {
 		return nil, result.Error
 	}
 	return files, nil
+}
+
+func DeleteFileByID(fileID string) error {
+	err := DeleteChunksByFileID(fileID)
+	if err != nil {
+		return err
+	}
+	result := db.Delete(File{}, "id=?", fileID)
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete the file and the chunks from db: %w", result.Error)
+	}
+	return nil
 }

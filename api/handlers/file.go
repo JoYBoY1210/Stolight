@@ -22,6 +22,7 @@ func ListFilesInBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 	files, err := models.GetFilesByBucketID(bucket.ID)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	response := map[string]interface{}{
 		"status": "success",
 		"files":  files,
@@ -29,3 +30,22 @@ func ListFilesInBucketHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func DeleteFile(w http.ResponseWriter, r *http.Request) {
+	fileID := r.URL.Query().Get("id")
+	if fileID == "" {
+		http.Error(w, "File ID is required", http.StatusBadRequest)
+		return
+	}
+	err := models.DeleteFileByID(fileID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to delete file: %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "File deleted successfully",
+	}
+	json.NewEncoder(w).Encode(response)
+}
