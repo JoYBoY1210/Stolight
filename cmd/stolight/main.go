@@ -8,6 +8,7 @@ import (
 	"github.com/joyboy1210/stolight/api"
 	"github.com/joyboy1210/stolight/config"
 	"github.com/joyboy1210/stolight/db"
+	"github.com/joyboy1210/stolight/models"
 )
 
 func main() {
@@ -23,6 +24,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to initialize database:", err)
 	}
+	models.SetDB(Db)
 	fmt.Println("db created successfully")
 	db.Mirgrate(Db)
 	api.InitServer()

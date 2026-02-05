@@ -8,8 +8,8 @@ import (
 )
 
 func Mirgrate(db *gorm.DB) error {
-	err := db.AutoMigrate(&models.File{}, &models.ChunkMetaData{})
-	if err!=nil{
+	err := db.AutoMigrate(&models.File{}, &models.ChunkMetaData{}, &models.Bucket{})
+	if err != nil {
 		return err
 	}
 	fmt.Println("Migration completed successfully")
