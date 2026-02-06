@@ -1,0 +1,2 @@
+--Improve the http endpoints. Right now they are trash
+--Presigned temporary URL to avoid proxy through backend.(directly req can come from frontend) 
