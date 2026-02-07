@@ -1,2 +1,3 @@
 --Improve the http endpoints. Right now they are trash
 --Presigned temporary URL to avoid proxy through backend.(directly req can come from frontend) 
+--right now when admin creates a new project there is no check which exists that will see if the bucket which he has mentioned actually exist or not. also need to way for the admin to be able to change this list of buckets later.

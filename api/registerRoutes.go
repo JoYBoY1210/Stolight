@@ -4,14 +4,19 @@ import (
 	"net/http"
 
 	"github.com/joyboy1210/stolight/api/handlers"
+	"github.com/joyboy1210/stolight/api/middlewares"
 )
 
 func RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/api/upload/", handlers.UploadHandlerAPI)
-	mux.HandleFunc("/api/download/", handlers.DownloadHandler)
+	mux.HandleFunc("/api/upload/", middlewares.CheckAuth(handlers.UploadHandlerAPI))
+	mux.HandleFunc("/api/download/", middlewares.CheckAuth(handlers.DownloadHandler))
 
-	mux.HandleFunc("/api/buckets/create", handlers.CreateBucketHandler)
+	mux.HandleFunc("/api/buckets/create", middlewares.CheckAuth(handlers.CreateBucketHandler))
 
-	mux.HandleFunc("/api/files/all/", handlers.ListFilesInBucketHandler)
-	mux.HandleFunc("/api/files/delete/", handlers.DeleteFile)
+	mux.HandleFunc("/api/files/all/", middlewares.CheckAuth(handlers.ListFilesInBucketHandler))
+	mux.HandleFunc("/api/files/delete/", middlewares.CheckAuth(handlers.DeleteFile))
+
+	mux.HandleFunc("/api/login", handlers.Login)
+
+	mux.HandleFunc("/api/admin/projects/create", middlewares.CheckAuth(handlers.CreateProjectHandler))
 }
