@@ -17,7 +17,7 @@ func HandleCreateProject() {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
-	if cfg.Role != "root" {
+	if cfg.Role != "admin" {
 		fmt.Println("Only Root Admin can create projects. Please log in as Root Admin.")
 		return
 	}
@@ -40,7 +40,7 @@ func HandleCreateProject() {
 	})
 
 	req, _ := http.NewRequest("POST", cfg.ServerURL+"/api/admin/projects/create", bytes.NewBuffer(reqBody))
-	req.Header.Set("X-API-Key", cfg.Token)
+	req.Header.Set("sto-Key", cfg.Token)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -51,7 +51,8 @@ func HandleCreateProject() {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+
 		body, _ := io.ReadAll(resp.Body)
 		fmt.Printf("Failed: %s\n", string(body))
 		return
@@ -62,8 +63,7 @@ func HandleCreateProject() {
 
 	fmt.Println("------------------------------------------------")
 	fmt.Println("Project Created Successfully")
-	fmt.Printf("Username: %s\n", result["name"])
-	fmt.Printf("API Key:  %s\n", result["api_key"])
+	fmt.Printf("API Key:  %s\n", result["key"])
 	fmt.Println("Copy this key. It will not be shown again.")
 	fmt.Println("------------------------------------------------")
 }

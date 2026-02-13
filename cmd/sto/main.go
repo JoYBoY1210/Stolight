@@ -19,21 +19,25 @@ func main() {
 	case "create-project":
 		cli.HandleCreateProject()
 	case "mb":
-		cli.HandleMakeBucket()
-	case "cp":
-
-		if len(os.Args) < 4 {
-			fmt.Println("Usage: sto cp <file> <bucket/path>")
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: sto mb <bucket>")
 			return
 		}
-		cli.HandleUpload(os.Args[2], os.Args[3])
-	case "rm":
+		cli.HandleMakeBucket(os.Args[2])
+	// case "cp":
 
-		if len(os.Args) < 2 {
-			fmt.Println("Usage: sto rm <bucket/path>")
-			return
-		}
-		cli.HandleDelete(os.Args[2])
+	// 	if len(os.Args) < 4 {
+	// 		fmt.Println("Usage: sto cp <file> <bucket/path>")
+	// 		return
+	// 	}
+	// 	cli.HandleUpload(os.Args[2], os.Args[3])
+	// case "rm":
+
+	// 	if len(os.Args) < 2 {
+	// 		fmt.Println("Usage: sto rm <bucket/path>")
+	// 		return
+	// 	}
+	// 	cli.HandleDelete(os.Args[2])
 
 	case "ls":
 
