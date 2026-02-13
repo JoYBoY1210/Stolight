@@ -16,15 +16,24 @@ func ListFilesInBucketHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	prefix := "/api/buckets/"
 
-	prefix := "/api/files/all/"
-	if strings.HasPrefix(r.URL.Path, prefix) == false {
+	if !strings.HasPrefix(r.URL.Path, prefix) {
 		http.Error(w, "Invalid URL to list files in bucket", http.StatusBadRequest)
 		return
 	}
-	bucketName := strings.TrimPrefix(r.URL.Path, prefix)
+
+	path := strings.Trim(strings.TrimPrefix(r.URL.Path, prefix), "/")
+	parts := strings.SplitN(path, "/", 2)
+
+	if len(parts) != 2 || parts[1] != "files" {
+		http.Error(w, "Invalid URL format. Use /api/buckets/{bucket}/files", http.StatusBadRequest)
+		return
+	}
+
+	bucketName := parts[0]
 	if bucketName == "" {
-		http.Error(w, "Bucket name is required to list all the files in it", http.StatusBadRequest)
+		http.Error(w, "Bucket name is required", http.StatusBadRequest)
 		return
 	}
 	bucket, err := models.GetBucketByName(bucketName)
@@ -51,19 +60,21 @@ func DeleteFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	prefix := "/api/files/delete/"
-	if strings.HasPrefix(r.URL.Path, prefix) == false {
+	prefix := "/api/buckets/"
+	if !strings.HasPrefix(r.URL.Path, prefix) {
 		http.Error(w, "Invalid URL to delete file", http.StatusBadRequest)
 		return
 	}
-	path := strings.TrimPrefix(r.URL.Path, prefix)
-	parts := strings.SplitN(path, "/", 2)
-	if len(parts) != 2 {
-		http.Error(w, "Invalid download URL", http.StatusBadRequest)
+	path := strings.Trim(strings.TrimPrefix(r.URL.Path, prefix), "/")
+	parts := strings.SplitN(path, "/", 3)
+
+	if len(parts) != 3 || parts[1] != "files" {
+		http.Error(w, "Invalid URL format. Use /api/buckets/{bucket}/files/{file}", http.StatusBadRequest)
 		return
 	}
+
 	bucketName := parts[0]
-	fileName := parts[1]
+	fileName := parts[2]
 
 	if bucketName == "" {
 		http.Error(w, "bucket name is required", http.StatusBadRequest)

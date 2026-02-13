@@ -43,7 +43,7 @@ func HandleList(bucketName string) {
 		fmt.Printf("error: %v\n", err)
 		return
 	}
-	req, _ := http.NewRequest("GET", cfg.ServerURL+"/api/files/all/"+bucketName, nil)
+	req, _ := http.NewRequest("GET", cfg.ServerURL+"/api/buckets/"+bucketName+"/files", nil)
 	req.Header.Set("sto-Key", cfg.Token)
 	client := &http.Client{}
 	resp, err := client.Do(req)
