@@ -57,10 +57,17 @@ func HandleList(bucketName string) {
 		fmt.Printf("Failed: %s\n", string(body))
 		return
 	}
-	var files []struct {
-		FileName string `json:"name"`
-		Size     int64  `json:"size"`
+
+	var result struct {
+		Status string `json:"status"`
+		Files  []struct {
+			FileName string `json:"name"`
+			Size     int64  `json:"size"`
+		} `json:"files"`
 	}
+	json.NewDecoder(resp.Body).Decode(&result)
+
+	files := result.Files
 	json.NewDecoder(resp.Body).Decode(&files)
 
 	fmt.Printf("\n Files in '%s':\n", bucketName)
