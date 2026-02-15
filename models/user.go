@@ -46,3 +46,7 @@ func CreateUser(Id, name, key, role, allowedBuckets string) error {
 	}
 	return db.Create(&user).Error
 }
+
+func UpdateUser(user *User) error {
+	return db.Save(user).Error
+}

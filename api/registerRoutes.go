@@ -19,4 +19,5 @@ func RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/login", handlers.Login)
 
 	mux.HandleFunc("POST /api/admin/projects/create", middlewares.CheckAuth(handlers.CreateProjectHandler))
+	mux.HandleFunc("POST /api/admin/projects/update", middlewares.CheckAuth(handlers.UpdateProject))
 }
