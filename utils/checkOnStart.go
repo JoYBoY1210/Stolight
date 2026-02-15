@@ -15,15 +15,15 @@ import (
 )
 
 func CheckOnStart(db *gorm.DB) {
-	userCount, err := models.GetTotalUsers()
+	userCount, err := models.GetTotalAdmins()
 	if err != nil {
-		fmt.Println("Failed to check total users: " + err.Error())
+		fmt.Println("Failed to check total admins: " + err.Error())
 	}
 
 	if userCount == 0 {
 		fmt.Println("\n🔰 FIRST RUN DETECTED")
 		fmt.Println("------------------------------------------------")
-		fmt.Println("No users found. Please create the ROOT account.")
+		fmt.Println("No admins found. Please create the ROOT account.")
 
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Enter Username [root]: ")

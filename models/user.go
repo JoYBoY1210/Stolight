@@ -12,9 +12,9 @@ type User struct {
 	CreatedAt      time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
 
-func GetTotalUsers() (int64, error) {
+func GetTotalAdmins() (int64, error) {
 	var count int64
-	err := db.Model(&User{}).Count(&count).Error
+	err := db.Model(&User{}).Where("role=?","admin").Count(&count).Error
 	return count, err
 }
 
