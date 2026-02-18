@@ -31,6 +31,13 @@ func main() {
 			return
 		}
 		cli.HandleUpload(os.Args[2], os.Args[3])
+
+	case "get":
+		if len(os.Args) < 4 {
+			fmt.Println("Usage: sto get <bucket/filename> <local-file>")
+			return
+		}
+		cli.HandleDownload(os.Args[2], os.Args[3])
 	case "rm":
 
 		if len(os.Args) < 2 {
@@ -68,6 +75,7 @@ func printHelp() {
 	fmt.Println("  mb <bucket>                   -> Create a new bucket")
 	fmt.Println("  ls <bucket>                   -> List files in a bucket")
 	fmt.Println("  cp <local-file> <bucket/path> -> Upload a file")
+	fmt.Println("  get <bucket/filename> <local-file> -> Download a file")
 	fmt.Println("  rm <bucket/path>              -> Delete a file")
 	fmt.Println("------------------------------------------------")
 }
