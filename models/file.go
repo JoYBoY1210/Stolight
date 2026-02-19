@@ -6,13 +6,14 @@ import (
 )
 
 type File struct {
-	ID        string `gorm:"primaryKey"`
-	Name      string `gorm:"uniqueIndex:idx_file_name_bucket_id"`
-	Size      int64
-	BucketID  string          `gorm:"uniqueIndex:idx_file_name_bucket_id"`
-	CreatedAt time.Time       `gorm:"autoCreateTime"`
-	UpdatedAt time.Time       `gorm:"autoUpdateTime"`
-	Chunks    []ChunkMetaData `gorm:"foreignKey:FileID;constraint:OnDelete:CASCADE;"`
+	ID           string `gorm:"primaryKey"`
+	Name         string `gorm:"uniqueIndex:idx_file_name_bucket_id"`
+	Size         int64
+	BucketID     string          `gorm:"uniqueIndex:idx_file_name_bucket_id"`
+	OriginalSize int64           `gorm:"not null"`
+	CreatedAt    time.Time       `gorm:"autoCreateTime"`
+	UpdatedAt    time.Time       `gorm:"autoUpdateTime"`
+	Chunks       []ChunkMetaData `gorm:"foreignKey:FileID;constraint:OnDelete:CASCADE;"`
 }
 
 func CreateFile(file *File) error {

@@ -1,9 +1,12 @@
 {
-    "server_port":6124,
-    "storage_nodes":[
+    "server_port": 6124,
+    "storage_nodes": [
+        "./data_nodes/node0",
         "./data_nodes/node1",
         "./data_nodes/node2",
-        "./data_nodes/node3"
+        "./data_nodes/node3",
+        "./data_nodes/node4",
+        "./data_nodes/node5"
     ],
-    "db_path":"stolight.db"
+    "db_path": "stolight.db"
 }
