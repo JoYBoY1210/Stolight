@@ -17,9 +17,7 @@ func DecodeFile(shardDir, fileName, outputPath string) error {
 	for i := 0; i < TotalShards; i++ {
 		shardPath := filepath.Join(shardDir, fmt.Sprintf("%s.shard.%d", fileName, i))
 		shardData, err := os.ReadFile(shardPath)
-		if err != nil {
-			return fmt.Errorf("could not read shard %d: %s", i, err)
-		} else {
+		if err == nil {
 			shards[i] = shardData
 			fmt.Printf("found shard number %d\n", i)
 		}
