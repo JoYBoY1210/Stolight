@@ -35,7 +35,7 @@ func UploadHandlerAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 	nodes := config.Cfg.StorageNodes
-	err = storage.SplitFile(header.Filename, header.Size, file, nodes, bucketName)
+	err = storage.EncodeFile(file, header.Filename, nodes, header.Size, bucketName)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Storage failed: %v", err), http.StatusInternalServerError)
 		return
