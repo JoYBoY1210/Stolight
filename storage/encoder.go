@@ -19,9 +19,10 @@ const (
 	ChunkSize    = 4 * 1024 * 1024
 )
 
-
-
 func EncodeFile(reader io.Reader, fileName string, NodeDirs []string, fileSize int64, bucketName string) error {
+
+	// fmt.Println("NodeDirs:", NodeDirs)
+
 	if len(NodeDirs) != TotalShards {
 		return fmt.Errorf("expected %d node directories, got %d", TotalShards, len(NodeDirs))
 	}

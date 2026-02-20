@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/joyboy1210/stolight/config"
 	"github.com/joyboy1210/stolight/models"
 	"github.com/joyboy1210/stolight/storage"
 )
@@ -74,7 +75,10 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 	// w.Header().Set("Content-Length", fmt.Sprintf("%d", fileMeta.Size))
 
-	err = storage.MergeFile(fileMeta.ID, w)
+	storageName := fmt.Sprintf("%s_%s", bucketName, fileName)
+	nodes := config.Cfg.StorageNodes
+
+	err = storage.DecodeFile(w, storageName, nodes, fileMeta.Size)
 	if err != nil {
 		fmt.Println("failed to download file:", err)
 		return
