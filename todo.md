@@ -12,7 +12,7 @@
 - [ ] Add bucket existence validation during project creation  
   *When an admin creates a new project, the backend must verify that the specified bucket actually exists.*
 
-- [ ] Allow admins to update bucket lists later  
+- [x] Allow admins to update bucket lists later  
   *Provide functionality to modify the list of allowed buckets after project creation.*
 
 ---
