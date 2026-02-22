@@ -26,3 +26,7 @@
 ## CLI Features
 
 - [x] CLI for download support  
+
+# extras
+- [] Hash the pieces and store hashes in DB, this prevents corruption. Check hashes when stitching the files.
+- [] Garabage collector.
