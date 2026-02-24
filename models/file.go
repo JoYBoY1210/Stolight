@@ -73,8 +73,8 @@ func GetFileByFileNameAndBucketId(fileName string, bucketID string) (*File, erro
 	return &file, nil
 }
 
-func UpdateFileStatus(fileID string, status FileStatus) error {
-	result := db.Model(&File{}).Where("id = ?", fileID).Update("status", status)
+func UpdateFileStatusAndSize(fileID string, status FileStatus, size int64) error {
+	result := db.Model(&File{}).Where("id = ?", fileID).Updates(map[string]interface{}{"status": status, "size": size})
 	if result.Error != nil {
 		return result.Error
 	}
