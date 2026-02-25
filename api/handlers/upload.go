@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/joyboy1210/stolight/queue"
 	"github.com/joyboy1210/stolight/storage"
 )
 
@@ -53,6 +54,12 @@ func UploadHandlerAPI(w http.ResponseWriter, r *http.Request) {
 
 			if err != nil {
 				http.Error(w, fmt.Sprintf("Storage failed: %v", err), http.StatusInternalServerError)
+				return
+			}
+			q := queue.GetQueue()
+			err = q.AddJob(fileID)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Failed to add job to queue: %v", err), http.StatusInternalServerError)
 				return
 			}
 			break

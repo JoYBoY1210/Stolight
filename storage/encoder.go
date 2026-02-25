@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"hash"
 	"io"
 	"os"
 	"path/filepath"
@@ -19,57 +21,64 @@ const (
 	ChunkSize    = 4 * 1024 * 1024
 )
 
-func EncodeFile(reader io.Reader, fileName string, NodeDirs []string, fileSize int64, bucketName string) error {
-
-	// fmt.Println("NodeDirs:", NodeDirs)
+func EncodeFile(reader io.Reader, fileID string, NodeDirs []string) error {
 
 	if len(NodeDirs) != TotalShards {
 		return fmt.Errorf("expected %d node directories, got %d", TotalShards, len(NodeDirs))
 	}
+
 	enc, err := reedsolomon.New(DataShards, ParityShards)
 	if err != nil {
 		return fmt.Errorf("failed to create encoder: %s", err)
 	}
+
 	outFiles := make([]*os.File, TotalShards)
-	storageName := fmt.Sprintf("%s_%s", bucketName, fileName)
+	hashers := make([]hash.Hash, TotalShards)
+	writers := make([]io.Writer, TotalShards)
+
 	for i := 0; i < TotalShards; i++ {
 		if err := os.MkdirAll(NodeDirs[i], 0755); err != nil {
-			return cleanupFailedUpload(outFiles, storageName, NodeDirs, fmt.Errorf("failed to create node dir  %s", err))
+			return cleanupFailedUpload(outFiles, fileID, NodeDirs, err)
 		}
-		outPath := filepath.Join(NodeDirs[i], fmt.Sprintf("%s.shard.%d", storageName, i))
-		f, err := os.OpenFile(outPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-		if err != nil {
-			return cleanupFailedUpload(outFiles, storageName, NodeDirs, fmt.Errorf("failed to open shard file: %w", err))
-		}
-		outFiles[i] = f
 
+		tmpPath := filepath.Join(NodeDirs[i], fmt.Sprintf("%s.shard.%d.tmp", fileID, i))
+		f, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			return cleanupFailedUpload(outFiles, fileID, NodeDirs, fmt.Errorf("failed to open shard file: %w", err))
+		}
+
+		outFiles[i] = f
+		hashers[i] = sha256.New()
+		writers[i] = io.MultiWriter(f, hashers[i])
 	}
+
 	buf := make([]byte, ChunkSize)
-	var totalSize int64
 	for {
 		n, err := io.ReadFull(reader, buf)
 		if n == 0 && err == io.EOF {
 			break
 		}
 		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-			return cleanupFailedUpload(outFiles, storageName, NodeDirs, fmt.Errorf("error reading stream: %w", err))
+			return cleanupFailedUpload(outFiles, fileID, NodeDirs, fmt.Errorf("error reading stream: %w", err))
 		}
-		totalSize += int64(n)
+
 		chunkData := buf[:n]
 		shards, err := enc.Split(chunkData)
 		if err != nil {
-			return cleanupFailedUpload(outFiles, storageName, NodeDirs, fmt.Errorf("failed to split data into shards: %w", err))
+			return cleanupFailedUpload(outFiles, fileID, NodeDirs, fmt.Errorf("failed to split: %w", err))
 		}
 		if err := enc.Encode(shards); err != nil {
-			return cleanupFailedUpload(outFiles, storageName, NodeDirs, fmt.Errorf("failed to encode shards: %w", err))
+			return cleanupFailedUpload(outFiles, fileID, NodeDirs, fmt.Errorf("failed to encode: %w", err))
 		}
+
 		var wg sync.WaitGroup
 		errCh := make(chan error, TotalShards)
 		for i, shard := range shards {
 			wg.Add(1)
 			go func(i int, shard []byte) {
 				defer wg.Done()
-				if _, err := outFiles[i].Write(shard); err != nil {
+
+				if _, err := writers[i].Write(shard); err != nil {
 					errCh <- fmt.Errorf("failed to write shard %d: %w", i, err)
 				}
 			}(i, shard)
@@ -78,48 +87,54 @@ func EncodeFile(reader io.Reader, fileName string, NodeDirs []string, fileSize i
 		close(errCh)
 		for err := range errCh {
 			if err != nil {
-				return cleanupFailedUpload(outFiles, storageName, NodeDirs, err)
+				return cleanupFailedUpload(outFiles, fileID, NodeDirs, err)
 			}
 		}
 	}
+
 	for _, f := range outFiles {
 		if f != nil {
 			f.Close()
 		}
 	}
 
-	bucketId, err := models.GetBucketByName(bucketName)
-	if err != nil {
-		return fmt.Errorf("failed to get bucket id: %w", err)
+	var shardRecords []models.Shard
+	for i := 0; i < TotalShards; i++ {
+		tmpPath := filepath.Join(NodeDirs[i], fmt.Sprintf("%s.shard.%d.tmp", fileID, i))
+		finalPath := filepath.Join(NodeDirs[i], fmt.Sprintf("%s.shard.%d", fileID, i))
+
+		if err := os.Rename(tmpPath, finalPath); err != nil {
+			return err
+		}
+
+		checksum := fmt.Sprintf("%x", hashers[i].Sum(nil))
+
+		shardRecords = append(shardRecords, models.Shard{
+			Id:       uuid.New().String(),
+			FileID:   fileID,
+			Index:    i,
+			Path:     finalPath,
+			Checksum: checksum,
+		})
 	}
 
-	fileId := uuid.New().String()
-	fileRecord := models.File{
-		ID:       fileId,
-		Name:     fileName,
-		Size:     fileSize,
-		BucketID: bucketId.ID,
-	}
-	err = models.CreateFile(&fileRecord)
-	if err != nil {
-		return fmt.Errorf("failed to create file record: %w", err)
+	if err := models.CreateShards(shardRecords); err != nil {
+		return fmt.Errorf("failed to save shard metadata: %v", err)
 	}
 
 	return nil
-
 }
 
-func cleanupFailedUpload(openFiles []*os.File, storageName string, nodeDirs []string, originalErr error) error {
-
+func cleanupFailedUpload(openFiles []*os.File, fileID string, nodeDirs []string, originalErr error) error {
 	for _, f := range openFiles {
 		if f != nil {
 			f.Close()
 		}
 	}
 	for i, nodeDir := range nodeDirs {
-		outPath := filepath.Join(nodeDir, fmt.Sprintf("%s.shard.%d", storageName, i))
-		os.Remove(outPath)
-	}
 
+		tmpPath := filepath.Join(nodeDir, fmt.Sprintf("%s.shard.%d.tmp", fileID, i))
+		os.Remove(tmpPath)
+	}
 	return originalErr
 }

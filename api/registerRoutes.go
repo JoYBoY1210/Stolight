@@ -14,7 +14,7 @@ func RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/buckets/", middlewares.CheckAuth(handlers.CreateBucketHandler))
 
 	mux.HandleFunc("GET /api/buckets/", middlewares.CheckAuth(handlers.ListFilesInBucketHandler))
-	mux.HandleFunc("DELETE /api/buckets/", middlewares.CheckAuth(handlers.DeleteFile))
+	// mux.HandleFunc("DELETE /api/buckets/", middlewares.CheckAuth(handlers.DeleteFile))
 
 	mux.HandleFunc("POST /api/login", handlers.Login)
 

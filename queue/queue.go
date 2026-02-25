@@ -14,12 +14,44 @@ type Queue struct {
 	wg     sync.WaitGroup
 }
 
+var queue *Queue
+
 func InitQueue(buffersize int) *Queue {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Queue{
+	q := &Queue{
 		jobs:   make(chan string, buffersize),
 		ctx:    ctx,
 		cancel: cancel,
+	}
+	queue = q
+	return q
+}
+
+func GetQueue() *Queue {
+	return queue
+}	
+
+func (q *Queue) StartWorkerPool(numWorkers int) {
+	for i := 0; i < numWorkers; i++ {
+		q.wg.Add(1)
+		go func(workerID int) {
+			defer q.wg.Done()
+			for {
+				select {
+				case <-q.ctx.Done():
+
+					log.Printf("Worker %d stopping gracefully..", workerID)
+					return
+
+				case id := <-q.jobs:
+
+					err := Worker(id)
+					if err != nil {
+						log.Printf("Worker %d error processing %s: %v", workerID, id, err)
+					}
+				}
+			}
+		}(i)
 	}
 }
 
@@ -29,7 +61,7 @@ func (q *Queue) AddJob(jobID string) error {
 		return nil
 	case <-q.ctx.Done():
 		return fmt.Errorf("Queue is closed")
-	
+
 	}
 }
 

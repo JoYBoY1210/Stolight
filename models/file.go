@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -19,11 +18,10 @@ type File struct {
 	ID        string `gorm:"primaryKey"`
 	Name      string `gorm:"uniqueIndex:idx_file_name_bucket_id"`
 	Size      int64
-	BucketID  string          `gorm:"uniqueIndex:idx_file_name_bucket_id"`
-	Status    FileStatus      `gorm:"default:'staging';index:idx_file_status" json:"status"`
-	CreatedAt time.Time       `gorm:"autoCreateTime"`
-	UpdatedAt time.Time       `gorm:"autoUpdateTime"`
-	Chunks    []ChunkMetaData `gorm:"foreignKey:FileID;constraint:OnDelete:CASCADE;"`
+	BucketID  string     `gorm:"uniqueIndex:idx_file_name_bucket_id"`
+	Status    FileStatus `gorm:"default:'staging';index:idx_file_status" json:"status"`
+	CreatedAt time.Time  `gorm:"autoCreateTime"`
+	UpdatedAt time.Time  `gorm:"autoUpdateTime"`
 }
 
 func CreateFile(file *File) error {
@@ -52,17 +50,17 @@ func GetFilesByBucketID(bucketID string) ([]File, error) {
 	return files, nil
 }
 
-func DeleteFileByID(fileID string) error {
-	err := DeleteChunksByFileID(fileID)
-	if err != nil {
-		return err
-	}
-	result := db.Delete(File{}, "id=?", fileID)
-	if result.Error != nil {
-		return fmt.Errorf("failed to delete the file and the chunks from db: %w", result.Error)
-	}
-	return nil
-}
+// func DeleteFileByID(fileID string) error {
+// 	err := DeleteChunksByFileID(fileID)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	result := db.Delete(File{}, "id=?", fileID)
+// 	if result.Error != nil {
+// 		return fmt.Errorf("failed to delete the file and the chunks from db: %w", result.Error)
+// 	}
+// 	return nil
+// }
 
 func GetFileByFileNameAndBucketId(fileName string, bucketID string) (*File, error) {
 	var file File
@@ -75,6 +73,14 @@ func GetFileByFileNameAndBucketId(fileName string, bucketID string) (*File, erro
 
 func UpdateFileStatusAndSize(fileID string, status FileStatus, size int64) error {
 	result := db.Model(&File{}).Where("id = ?", fileID).Updates(map[string]interface{}{"status": status, "size": size})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func UpdateFileStatus(fileID string, status FileStatus) error {
+	result := db.Model(&File{}).Where("id = ?", fileID).Update("status", status)
 	if result.Error != nil {
 		return result.Error
 	}

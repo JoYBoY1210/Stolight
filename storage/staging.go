@@ -54,6 +54,6 @@ func StageFile(src io.Reader, fileName string, size int64, bucketName string) (s
 	if err != nil {
 		return "", 0, fmt.Errorf("could not update file status: %v", err)
 	}
-	//idhar worker we have to call later. we will add the file to the queue here.
+
 	return fileID, written, nil
 }
