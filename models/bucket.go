@@ -34,3 +34,11 @@ func GetBucketByName(name string) (*Bucket, error) {
 	}
 	return &bucket, nil
 }
+func GetBucketByID(id string) (*Bucket, error) {
+	var bucket Bucket
+	result := db.First(&bucket, "id = ?", id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &bucket, nil
+}
