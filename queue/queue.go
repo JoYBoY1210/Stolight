@@ -24,12 +24,13 @@ func InitQueue(buffersize int) *Queue {
 		cancel: cancel,
 	}
 	queue = q
+	q.StartWorkerPool(2)
 	return q
 }
 
 func GetQueue() *Queue {
 	return queue
-}	
+}
 
 func (q *Queue) StartWorkerPool(numWorkers int) {
 	for i := 0; i < numWorkers; i++ {

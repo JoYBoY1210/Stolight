@@ -9,6 +9,7 @@ import (
 	"github.com/joyboy1210/stolight/config"
 	"github.com/joyboy1210/stolight/db"
 	"github.com/joyboy1210/stolight/models"
+	"github.com/joyboy1210/stolight/queue"
 	"github.com/joyboy1210/stolight/utils"
 )
 
@@ -29,6 +30,7 @@ func main() {
 	fmt.Println("db created successfully")
 	db.Mirgrate(Db)
 	utils.CheckOnStart(Db)
+	queue.InitQueue(100)
 	api.InitServer()
 
 }
