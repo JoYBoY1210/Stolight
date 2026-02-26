@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/joyboy1210/stolight/models"
 )
@@ -15,22 +14,8 @@ func ListFilesInBucketHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	prefix := "/api/buckets/"
 
-	if !strings.HasPrefix(r.URL.Path, prefix) {
-		http.Error(w, "Invalid URL to list files in bucket", http.StatusBadRequest)
-		return
-	}
-
-	path := strings.Trim(strings.TrimPrefix(r.URL.Path, prefix), "/")
-	parts := strings.SplitN(path, "/", 2)
-
-	if len(parts) != 2 || parts[1] != "files" {
-		http.Error(w, "Invalid URL format. Use /api/buckets/{bucket}/files", http.StatusBadRequest)
-		return
-	}
-
-	bucketName := parts[0]
+	bucketName := r.PathValue("bucket")
 	if bucketName == "" {
 		http.Error(w, "Bucket name is required", http.StatusBadRequest)
 		return

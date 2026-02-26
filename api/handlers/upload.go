@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/joyboy1210/stolight/queue"
 	"github.com/joyboy1210/stolight/storage"
@@ -13,14 +12,9 @@ import (
 
 func UploadHandlerAPI(w http.ResponseWriter, r *http.Request) {
 
-	prefix := "/api/upload/"
-	if strings.HasPrefix(r.URL.Path, prefix) == false {
-		http.Error(w, "Invalid upload URL", http.StatusBadRequest)
-		return
-	}
-	bucketName := strings.TrimPrefix(r.URL.Path, prefix)
+	bucketName := r.PathValue("bucket")
 	if bucketName == "" {
-		http.Error(w, "Bucket name is required", http.StatusBadRequest)
+		http.Error(w, "Bucket name is required in the URL", http.StatusBadRequest)
 		return
 	}
 

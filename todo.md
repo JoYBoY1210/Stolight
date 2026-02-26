@@ -20,10 +20,11 @@
 ## Priority Requirement
 
 - [x] Add a way to change the list of allowed buckets for a project  
-- [] EC in async. Keep the uploaded files in a temporary folder on server, return 200 OK to user. push this   job to Queue then after that do everything in the background.
-- [] FUCKKKKKK. right now i am not allowing files wiht the same name to exist in the same bucket.
-- [] complete the staging part(u need to add the worker in the end).
+- [x] EC in async. Keep the uploaded files in a temporary folder on server, return 200 OK to user. push this   job to Queue then after that do everything in the background.
+- [x] FUCKKKKKK. right now i am not allowing files wiht the same name to exist in the same bucket.
+- [x] complete the staging part(u need to add the worker in the end).
 - [] Change middleware to work with fileId instead of FileName.
+- [] change download handler.
 
 ---
 

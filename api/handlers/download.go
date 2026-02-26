@@ -18,20 +18,8 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prefix := "/api/download/"
-	if strings.HasPrefix(r.URL.Path, prefix) == false {
-		http.Error(w, "Invalid download URL", http.StatusBadRequest)
-		return
-	}
-
-	path := strings.TrimPrefix(r.URL.Path, prefix)
-	parts := strings.SplitN(path, "/", 2)
-	if len(parts) != 2 {
-		http.Error(w, "Invalid download URL", http.StatusBadRequest)
-		return
-	}
-	bucketName := parts[0]
-	fileName := parts[1]
+	bucketName := r.PathValue("bucket")
+	fileName := r.PathValue("fileId") //i need to change this handler to use fileId instead of fileName, but for now i will keep it as fileName to make it work with current implementation
 
 	if bucketName == "" {
 		http.Error(w, "bucket name is required", http.StatusBadRequest)
