@@ -24,7 +24,8 @@
 - [x] FUCKKKKKK. right now i am not allowing files wiht the same name to exist in the same bucket.
 - [x] complete the staging part(u need to add the worker in the end).
 - [x] Change middleware to work with fileId instead of FileName.
-- [] change download handler.
+- [x] change download handler.
+- [] update CLI to use fileID instead of name.
 
 ---
 
