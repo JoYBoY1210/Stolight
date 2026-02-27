@@ -15,7 +15,7 @@ func HandleDownload(remotePath, localPath string) {
 		return
 	}
 	bucket := parts[0]
-	fileName := parts[1]
+	fileId := parts[1]
 
 	cfg, err := LoadConfig()
 	if err != nil {
@@ -30,7 +30,7 @@ func HandleDownload(remotePath, localPath string) {
 		println("Only admin users can download files.")
 		return
 	}
-	req, err := http.NewRequest("GET", cfg.ServerURL+"/api/download/"+bucket+"/"+fileName, nil)
+	req, err := http.NewRequest("GET", cfg.ServerURL+"/api/download/"+bucket+"/"+fileId, nil)
 	if err != nil {
 		println("Error creating request:", err.Error())
 		return
