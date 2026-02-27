@@ -15,3 +15,12 @@ func CreateShards(shards []Shard) error {
 	}
 	return nil
 }
+
+func GetShardsByFileID(fileId string) ([]Shard, error) {
+	var shards []Shard
+	result := db.Where("file_id = ?", fileId).Find(&shards)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return shards, nil
+}

@@ -1,39 +1,76 @@
 package storage
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
+	"github.com/joyboy1210/stolight/models"
 	"github.com/klauspost/reedsolomon"
 )
 
-func DecodeFile(w io.Writer, storageName string, nodeDirs []string, exactSize int64) error {
-
+func DecodeFile(w io.Writer, fileId string, nodes []string, exactSize int64) error {
+	expectedShards, err := models.GetShardsByFileID(fileId)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve shards: %v", err)
+	}
 	enc, err := reedsolomon.New(DataShards, ParityShards)
 	if err != nil {
-		return fmt.Errorf("failed to create decoder: %w", err)
+		return fmt.Errorf("failed to create Reed-Solomon encoder: %v", err)
 	}
-	shards := make([][]byte, TotalShards)
-	for i, node := range nodeDirs {
-		path := filepath.Join(node, fmt.Sprintf("%s.shard.%d", storageName, i))
-		data, err := os.ReadFile(path)
-		// fmt.Printf("Checking shard path: %s\n", path)
-		if err == nil {
-			shards[i] = data
+	shardFiles := make([]*os.File, TotalShards)
+	for i := 0; i < TotalShards; i++ {
+		path := filepath.Join(nodes[i], fmt.Sprintf("%s.shard.%d", fileId, i))
+		if isValid(path, expectedShards[i].Checksum) {
+			f, _ := os.Open(path)
+			shardFiles[i] = f
+			defer f.Close()
 		} else {
-			fmt.Printf("Missing shard %d, will attempt to heal\n", i)
-			shards[i] = nil
+			fmt.Printf("Shard %d is missing or CORRUPT. Marking for reconstruction.\n", i)
+			shardFiles[i] = nil
 		}
 	}
-	err = enc.Reconstruct(shards)
-	if err != nil {
-		return fmt.Errorf("failed to reconstruct shards: %w", err)
+	shardChunkSize := int64(ChunkSize)
+	remaining := exactSize
+
+	for remaining > 0 {
+		shards := make([][]byte, TotalShards)
+		for i := 0; i < TotalShards; i++ {
+			if shardFiles[i] != nil {
+				shards[i] = make([]byte, shardChunkSize)
+				io.ReadFull(shardFiles[i], shards[i])
+			}
+		}
+		if err = enc.Reconstruct(shards); err != nil {
+			return fmt.Errorf("failed to reconstruct shards: %v", err)
+		}
+
+		toWrite := int64(ChunkSize / DataShards)
+		if remaining < toWrite {
+			toWrite = remaining
+		}
+
+		enc.Join(w, shards, int(toWrite))
+		remaining -= toWrite
 	}
-	err = enc.Join(w, shards, int(exactSize))
-	if err != nil {
-		return fmt.Errorf("failed to join shards: %w", err)
-	}
+
 	return nil
+}
+
+func isValid(path string, expectedHash string) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return false
+	}
+
+	actualHash := fmt.Sprintf("%x", h.Sum(nil))
+	return actualHash == expectedHash
 }
