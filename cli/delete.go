@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
@@ -16,8 +15,8 @@ func HandleDelete(remotePath string) {
 	}
 	parts := strings.SplitN(remotePath, "/", 2)
 	bucketName := parts[0]
-	fileName := parts[1]
-	url := fmt.Sprintf("%s/api/buckets/%s/files/%s", cfg.ServerURL, bucketName, url.PathEscape(fileName))
+	fileId := parts[1]
+	url := fmt.Sprintf("%s/api/buckets/%s/files/%s", cfg.ServerURL, bucketName, fileId)
 	req, _ := http.NewRequest("DELETE", url, nil)
 	req.Header.Set("sto-Key", cfg.Token)
 	client := &http.Client{}
@@ -32,5 +31,5 @@ func HandleDelete(remotePath string) {
 		fmt.Printf("Failed: %s\n", string(body))
 		return
 	}
-	fmt.Printf("File '%s' deleted successfully from bucket '%s'!\n", fileName, bucketName)
+	fmt.Printf("File '%s' deleted successfully from bucket '%s'!\n", fileId, bucketName)
 }

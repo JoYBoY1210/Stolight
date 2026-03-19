@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/joyboy1210/stolight/models"
 	"github.com/joyboy1210/stolight/queue"
 	"github.com/joyboy1210/stolight/storage"
 )
@@ -15,6 +16,12 @@ func UploadHandlerAPI(w http.ResponseWriter, r *http.Request) {
 	bucketName := r.PathValue("bucket")
 	if bucketName == "" {
 		http.Error(w, "Bucket name is required in the URL", http.StatusBadRequest)
+		return
+	}
+
+	bucket, err := models.GetBucketByName(bucketName)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get bucket: %s", err.Error()), http.StatusNotFound)
 		return
 	}
 
@@ -43,7 +50,7 @@ func UploadHandlerAPI(w http.ResponseWriter, r *http.Request) {
 			fileFound = true
 			fileName = part.FileName()
 
-			fileID, size, err = storage.StageFile(part, fileName, 0, bucketName)
+			fileID, size, err = storage.StageFile(part, fileName, 0, bucket.ID)
 			part.Close()
 
 			if err != nil {

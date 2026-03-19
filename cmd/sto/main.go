@@ -76,6 +76,6 @@ func printHelp() {
 	fmt.Println("  ls <bucket>                   -> List files in a bucket")
 	fmt.Println("  cp <local-file> <bucket/path> -> Upload a file")
 	fmt.Println("  get <bucket/fileId> <local-file> -> Download a file")
-	fmt.Println("  rm <bucket/path>              -> Delete a file")
+	fmt.Println("  rm <bucket/fileId>              -> Delete a file")
 	fmt.Println("------------------------------------------------")
 }

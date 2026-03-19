@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+	"os"
 	"time"
 )
 
@@ -50,17 +52,17 @@ func GetFilesByBucketID(bucketID string) ([]File, error) {
 	return files, nil
 }
 
-// func DeleteFileByID(fileID string) error {
-// 	err := DeleteChunksByFileID(fileID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	result := db.Delete(File{}, "id=?", fileID)
-// 	if result.Error != nil {
-// 		return fmt.Errorf("failed to delete the file and the chunks from db: %w", result.Error)
-// 	}
-// 	return nil
-// }
+func DeleteFileByID(fileID string) error {
+	err := DeleteChunksByFileID(fileID)
+	if err != nil {
+		return err
+	}
+	result := db.Delete(File{}, "id=?", fileID)
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete the file and the chunks from db: %w", result.Error)
+	}
+	return nil
+}
 
 func GetFileByFileNameAndBucketId(fileName string, bucketID string) (*File, error) {
 	var file File
@@ -83,6 +85,27 @@ func UpdateFileStatus(fileID string, status FileStatus) error {
 	result := db.Model(&File{}).Where("id = ?", fileID).Update("status", status)
 	if result.Error != nil {
 		return result.Error
+	}
+	return nil
+}
+
+func DeleteChunksByFileID(fileID string) error {
+	var chunks []Shard
+	result := db.Where("file_id=?", fileID).Find(&chunks)
+	if result.Error != nil {
+		return result.Error
+	}
+	for _, chunk := range chunks {
+		chunkPath := chunk.Path
+		err := os.Remove(chunkPath)
+		if err != nil && !os.IsNotExist(err) {
+
+			fmt.Printf("Warning: failed to delete physical chunk %s: %v\n", chunk.Path, err)
+		}
+	}
+	result = db.Where("file_id=?", fileID).Delete(&Shard{})
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete shard records from db: %w", result.Error)
 	}
 	return nil
 }

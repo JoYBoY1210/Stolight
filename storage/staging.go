@@ -10,14 +10,14 @@ import (
 	"github.com/joyboy1210/stolight/models"
 )
 
-func StageFile(src io.Reader, fileName string, size int64, bucketName string) (string, int64, error) {
+func StageFile(src io.Reader, fileName string, size int64, bucketId string) (string, int64, error) {
 
 	fileID := uuid.New().String()
 	file := &models.File{
 		ID:       fileID,
 		Name:     fileName,
 		Size:     size,
-		BucketID: bucketName,
+		BucketID: bucketId,
 		Status:   models.FileStatusStaging,
 	}
 	err := models.CreateFile(file)
