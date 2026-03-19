@@ -15,6 +15,8 @@
 - [x] Allow admins to update bucket lists later  
   *Provide functionality to modify the list of allowed buckets after project creation.*
 
+- [] Instead of sending the whole file over one http req, split them in numerous http req and then send the chunks in together. Helps to prevent restart due to network disruptions.
+
 ---
 
 ## Priority Requirement
@@ -26,7 +28,7 @@
 - [x] Change middleware to work with fileId instead of FileName.
 - [x] change download handler.
 - [x] update CLI to use fileID instead of name.
-- [] Update Delete File handler.
+- [x] Update Delete File handler.
 
 ---
 
