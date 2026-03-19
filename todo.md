@@ -25,7 +25,8 @@
 - [x] complete the staging part(u need to add the worker in the end).
 - [x] Change middleware to work with fileId instead of FileName.
 - [x] change download handler.
-- [] update CLI to use fileID instead of name.
+- [x] update CLI to use fileID instead of name.
+- [] Update Delete File handler.
 
 ---
 
@@ -34,6 +35,6 @@
 - [x] CLI for download support  
 
 # extras
-- [] Hash the pieces and store hashes in DB, this prevents corruption. Check hashes when stitching the files.
+- [x] Hash the pieces and store hashes in DB, this prevents corruption. Check hashes when stitching the files.
 - [] Garabage collector.
 - [] compression before parity bits are formed.
