@@ -16,8 +16,8 @@ type Queue struct {
 
 var queue *Queue
 
-func InitQueue(buffersize int) *Queue {
-	ctx, cancel := context.WithCancel(context.Background())
+func InitQueue(parent context.Context, buffersize int) *Queue {
+	ctx, cancel := context.WithCancel(parent)
 	q := &Queue{
 		jobs:   make(chan string, buffersize),
 		ctx:    ctx,
@@ -44,7 +44,11 @@ func (q *Queue) StartWorkerPool(numWorkers int) {
 					log.Printf("Worker %d stopping gracefully..", workerID)
 					return
 
-				case id := <-q.jobs:
+				case id, ok := <-q.jobs:
+					if !ok {
+						log.Printf("Worker %d received closed channel", workerID)
+						return
+					}
 
 					err := Worker(id)
 					if err != nil {

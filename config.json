@@ -8,5 +8,7 @@
         "./data_nodes/node4",
         "./data_nodes/node5"
     ],
-    "db_path": "stolight.db"
+    "db_path": "stolight.db",
+    "gc_interval_hours":12,
+    "gc_orphan_threshold_hours":24
 }

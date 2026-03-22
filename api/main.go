@@ -1,25 +1,43 @@
 package api
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/joyboy1210/stolight/config"
 )
 
-func InitServer() {
+func InitServer(ctx context.Context) {
 	mux := http.NewServeMux()
 	RegisterRoutes(mux)
-	handler := mux
+
 	addr := fmt.Sprintf(":%d", config.Cfg.ServerPort)
+
 	server := &http.Server{
 		Addr:              addr,
-		Handler:           handler,
+		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	fmt.Printf("Listening on %s\n", addr)
-	if err := server.ListenAndServe(); err != nil {
-		fmt.Printf("Server could not be started: %v\n", err)
+	go func() {
+		fmt.Printf("Listening on %s\n", addr)
+
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+
+	<-ctx.Done()
+
+	log.Println("Shutting down HTTP server...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Server shutdown error: %v", err)
 	}
+
+	log.Println("HTTP server stopped")
 }

@@ -8,9 +8,11 @@ import (
 )
 
 type Config struct {
-	ServerPort   int      `json:"server_port"`
-	StorageNodes []string `json:"storage_nodes"`
-	DBPath       string   `json:"db_path"`
+	ServerPort             int      `json:"server_port"`
+	StorageNodes           []string `json:"storage_nodes"`
+	DBPath                 string   `json:"db_path"`
+	GCIntervalHours        int      `json:"gc_interval_hours"`
+	GCOrphanThresholdHours int      `json:"gc_orphan_threshold_hours"`
 }
 
 // global var as i want to load conifg only once but want to use it in every API
@@ -22,9 +24,11 @@ func LoadConfig() *Config {
 	if err != nil {
 		log.Println("config file not found using default values")
 		return &Config{
-			ServerPort:   6124,
-			StorageNodes: []string{"./data_nodes/node1", "./data_nodes/node2", "./data_nodes/node3"},
-			DBPath:       "stolight.db",
+			ServerPort:             6124,
+			StorageNodes:           []string{"./data_nodes/node1", "./data_nodes/node2", "./data_nodes/node3"},
+			DBPath:                 "stolight.db",
+			GCIntervalHours:        12,
+			GCOrphanThresholdHours: 24,
 		}
 	}
 	err = json.Unmarshal(file, &cfg)

@@ -1,13 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/joyboy1210/stolight/api"
 	"github.com/joyboy1210/stolight/config"
 	"github.com/joyboy1210/stolight/db"
+	"github.com/joyboy1210/stolight/gc"
 	"github.com/joyboy1210/stolight/models"
 	"github.com/joyboy1210/stolight/queue"
 	"github.com/joyboy1210/stolight/utils"
@@ -26,11 +30,18 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to initialize database:", err)
 	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	models.SetDB(Db)
 	fmt.Println("db created successfully")
 	db.Mirgrate(Db)
 	utils.CheckOnStart(Db)
-	queue.InitQueue(100)
-	api.InitServer()
+	q := queue.InitQueue(ctx, 100)
+	api.InitServer(ctx)
+	go gc.StartGC(ctx)
+	<-ctx.Done()
+	q.Close()
 
 }
