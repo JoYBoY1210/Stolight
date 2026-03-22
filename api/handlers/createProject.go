@@ -35,6 +35,13 @@ func CreateProjectHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Project name is required", http.StatusBadRequest)
 		return
 	}
+
+	isValid, err := models.ValidateBuckets(req.Buckets)
+	if !isValid {
+		http.Error(w, "Invalid bucket names provided", http.StatusBadRequest)
+		return
+	}
+
 	apiKey := uuid.New().String()
 	ID := uuid.New().String()
 	err = models.CreateUser(ID, req.Name, apiKey, "project", req.Buckets)

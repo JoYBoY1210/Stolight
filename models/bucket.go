@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,4 +43,41 @@ func GetBucketByID(id string) (*Bucket, error) {
 		return nil, result.Error
 	}
 	return &bucket, nil
+}
+
+func ValidateBuckets(raw string) (bool, error) {
+	parts := strings.Split(raw, ",")
+
+	unique := make(map[string]struct{})
+	var names []string
+
+	for _, p := range parts {
+		name := strings.TrimSpace(p)
+		if name == "" {
+			continue
+		}
+
+		name = strings.ToLower(name)
+
+		if _, exists := unique[name]; !exists {
+			unique[name] = struct{}{}
+			names = append(names, name)
+		}
+	}
+
+	if len(names) == 0 {
+		return false, fmt.Errorf("no valid bucket names provided")
+	}
+
+	var count int64
+	err := db.Model(&Bucket{}).
+		Where("LOWER(name) IN ?", names).
+		Distinct("name").
+		Count(&count).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return count == int64(len(names)), nil
 }

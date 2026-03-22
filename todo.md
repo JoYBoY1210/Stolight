@@ -9,7 +9,7 @@
   *Avoid proxying uploads/downloads through the backend.  
   Frontend should directly make requests to the storage provider.*
 
-- [ ] Add bucket existence validation during project creation  
+- [x] Add bucket existence validation during project creation  
   *When an admin creates a new project, the backend must verify that the specified bucket actually exists.*
 
 - [x] Allow admins to update bucket lists later  
