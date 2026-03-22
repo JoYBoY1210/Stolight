@@ -29,6 +29,7 @@
 - [x] change download handler.
 - [x] update CLI to use fileID instead of name.
 - [x] Update Delete File handler.
+- [] Change the directories of everything to a permanent location(rn it is ./whatever).
 
 ---
 

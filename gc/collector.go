@@ -32,3 +32,11 @@ func StartGC(ctx context.Context) {
 		}
 	}
 }
+
+func GetCutOffTime() time.Time {
+	threshold := config.Cfg.GCOrphanThresholdHours
+	if threshold <= 0 {
+		threshold = 24
+	}
+	return time.Now().Add(-time.Duration(threshold) * time.Hour)
+}
