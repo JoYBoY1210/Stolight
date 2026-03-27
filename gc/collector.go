@@ -22,10 +22,10 @@ func StartGC(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			<-ticker.C
 			fmt.Println("[GC] Waking up to clean")
 			SweepNodes()
 			SweepStaging()
+			SweepGhostShards()
 			fmt.Println("[GC] Sweep Done sleeping again.")
 		case <-ctx.Done():
 			fmt.Println("[GC] Shutting down Garbage Collector")
