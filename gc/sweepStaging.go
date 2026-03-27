@@ -8,7 +8,7 @@ import (
 
 func SweepStaging() {
 	cutoff := GetCutOffTime()
-	stagingDir := "./staging"
+	stagingDir := "./staging" //TODO: make this configurable
 
 	contents, err := os.ReadDir(stagingDir)
 	if err != nil {

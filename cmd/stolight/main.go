@@ -39,8 +39,8 @@ func main() {
 	db.Mirgrate(Db)
 	utils.CheckOnStart(Db)
 	q := queue.InitQueue(ctx, 100)
-	api.InitServer(ctx)
 	go gc.StartGC(ctx)
+	api.InitServer(ctx)
 	<-ctx.Done()
 	q.Close()
 

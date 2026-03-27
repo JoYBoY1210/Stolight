@@ -24,7 +24,8 @@ func StartGC(ctx context.Context) {
 		case <-ticker.C:
 			<-ticker.C
 			fmt.Println("[GC] Waking up to clean")
-
+			SweepNodes()
+			SweepStaging()
 			fmt.Println("[GC] Sweep Done sleeping again.")
 		case <-ctx.Done():
 			fmt.Println("[GC] Shutting down Garbage Collector")
