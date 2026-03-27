@@ -39,5 +39,5 @@
 
 # extras
 - [x] Hash the pieces and store hashes in DB, this prevents corruption. Check hashes when stitching the files.
-- [] Garabage collector.
+- [x] Garabage collector.
 - [] compression before parity bits are formed.
