@@ -86,14 +86,14 @@ func EncodeFile(reader io.Reader, fileID string, NodeDirs []string) error {
 				}
 
 				hashUint := xxh3.Hash(shard)
-				
+				checkSum := fmt.Sprintf("%x", hashUint)
 
 				shardRecord := models.Split{
 					ID:         uuid.New().String(),
 					FileID:     fileID,
 					ShardID:    shardIds[i],
 					ChunkIndex: currentChunkIndex,
-					Hash:       hashUint,
+					Hash:       checkSum,
 					Size:       int64(len(shard)),
 				}
 

@@ -8,7 +8,7 @@ import (
 )
 
 func Mirgrate(db *gorm.DB) error {
-	err := db.AutoMigrate(&models.File{}, &models.Bucket{}, &models.User{}, &models.Shard{})
+	err := db.AutoMigrate(&models.File{}, &models.Bucket{}, &models.User{}, &models.Shard{}, &models.Split{})
 	if err != nil {
 		return err
 	}
