@@ -16,44 +16,68 @@ func DecodeFile(w io.Writer, fileId string, nodes []string, exactSize int64) err
 	if err != nil {
 		return fmt.Errorf("failed to retrieve shards: %v", err)
 	}
+
 	enc, err := reedsolomon.New(DataShards, ParityShards)
 	if err != nil {
 		return fmt.Errorf("failed to create Reed-Solomon encoder: %v", err)
 	}
+
 	shardFiles := make([]*os.File, TotalShards)
 	for i := 0; i < TotalShards; i++ {
 		path := filepath.Join(nodes[i], fmt.Sprintf("%s.shard.%d", fileId, i))
 		if isValid(path, expectedShards[i].Checksum) {
-			f, _ := os.Open(path)
-			shardFiles[i] = f
-			defer f.Close()
+			f, err := os.Open(path)
+			if err == nil {
+				shardFiles[i] = f
+				defer f.Close()
+			} else {
+				shardFiles[i] = nil
+			}
 		} else {
 			fmt.Printf("Shard %d is missing or CORRUPT. Marking for reconstruction.\n", i)
 			shardFiles[i] = nil
 		}
 	}
-	shardChunkSize := int64(ChunkSize)
+
+	shardChunkSize := int64(ChunkSize / DataShards)
 	remaining := exactSize
 
+	buffers := make([][]byte, TotalShards)
+	for i := range buffers {
+		buffers[i] = make([]byte, shardChunkSize)
+	}
+
 	for remaining > 0 {
-		shards := make([][]byte, TotalShards)
+		stepShards := make([][]byte, TotalShards)
+
 		for i := 0; i < TotalShards; i++ {
 			if shardFiles[i] != nil {
-				shards[i] = make([]byte, shardChunkSize)
-				io.ReadFull(shardFiles[i], shards[i])
+				stepShards[i] = buffers[i]
+
+				_, err := io.ReadFull(shardFiles[i], stepShards[i])
+				if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+					fmt.Printf("Error reading shard %d midway: %v. Dropping shard.\n", i, err)
+					shardFiles[i] = nil
+					stepShards[i] = nil
+				}
+			} else {
+				stepShards[i] = nil
 			}
 		}
-		if err = enc.Reconstruct(shards); err != nil {
+
+		if err = enc.Reconstruct(stepShards); err != nil {
 			return fmt.Errorf("failed to reconstruct shards: %v", err)
 		}
-
-		toWrite := int64(ChunkSize / DataShards)
-		if remaining < toWrite {
-			toWrite = remaining
+		outSize := int64(ChunkSize)
+		if remaining < outSize {
+			outSize = remaining
 		}
 
-		enc.Join(w, shards, int(toWrite))
-		remaining -= toWrite
+		if err := enc.Join(w, stepShards, int(outSize)); err != nil {
+			return fmt.Errorf("failed to join shards: %v", err)
+		}
+
+		remaining -= outSize
 	}
 
 	return nil
