@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/joyboy1210/stolight/config"
 )
@@ -19,6 +20,9 @@ func SweepNodes() {
 		}
 		for _, entry := range entries {
 			if entry.IsDir() {
+				continue
+			}
+			if !strings.HasSuffix(entry.Name(), ".tmp") {
 				continue
 			}
 			info, err := entry.Info()

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type FileStatus string
@@ -15,6 +17,8 @@ const (
 	FileStatusCompleted FileStatus = "completed"
 	FileStatusFailed    FileStatus = "failed"
 )
+
+var ErrFileNotFound = gorm.ErrRecordNotFound
 
 type File struct {
 	ID        string `gorm:"primaryKey"`
@@ -108,4 +112,22 @@ func DeleteChunksByFileID(fileID string) error {
 		return fmt.Errorf("failed to delete shard records from db: %w", result.Error)
 	}
 	return nil
+}
+
+func GetAllFileIds() (map[string]bool, error) {
+	rows, err := db.Model(&File{}).Select("id").Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	fileIds := make(map[string]bool)
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		fileIds[id] = true
+	}
+	return fileIds, nil
 }
