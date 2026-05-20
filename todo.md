@@ -30,6 +30,8 @@
 - [x] update CLI to use fileID instead of name.
 - [x] Update Delete File handler.
 - [] Change the directories of everything to a permanent location(rn it is ./whatever).
+- [] Add bitrot protection to GC.
+- [] change the hashing algorithm to xxh3 or smthng instead of sha256 to save compute.
 
 ---
 

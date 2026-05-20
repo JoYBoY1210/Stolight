@@ -1,11 +1,10 @@
 package models
 
 type Shard struct {
-	Id       string `gorm:"primaryKey"`
-	FileID   string `gorm:"index"`
-	Index    int
-	Path     string
-	Checksum string
+	Id     string `gorm:"primaryKey"`
+	FileID string `gorm:"index"`
+	ShardIndex  int
+	Path   string
 }
 
 func CreateShards(shards []Shard) error {

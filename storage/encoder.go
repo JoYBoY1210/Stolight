@@ -1,9 +1,7 @@
 package storage
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"hash"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joyboy1210/stolight/models"
 	"github.com/klauspost/reedsolomon"
+	"github.com/zeebo/xxh3"
 )
 
 const (
@@ -22,7 +21,6 @@ const (
 )
 
 func EncodeFile(reader io.Reader, fileID string, NodeDirs []string) error {
-
 	if len(NodeDirs) != TotalShards {
 		return fmt.Errorf("expected %d node directories, got %d", TotalShards, len(NodeDirs))
 	}
@@ -33,8 +31,10 @@ func EncodeFile(reader io.Reader, fileID string, NodeDirs []string) error {
 	}
 
 	outFiles := make([]*os.File, TotalShards)
-	hashers := make([]hash.Hash, TotalShards)
-	writers := make([]io.Writer, TotalShards)
+	shardIds := make([]string, TotalShards)
+	for i := 0; i < TotalShards; i++ {
+		shardIds[i] = uuid.New().String()
+	}
 
 	for i := 0; i < TotalShards; i++ {
 		if err := os.MkdirAll(NodeDirs[i], 0755); err != nil {
@@ -46,11 +46,12 @@ func EncodeFile(reader io.Reader, fileID string, NodeDirs []string) error {
 		if err != nil {
 			return cleanupFailedUpload(outFiles, fileID, NodeDirs, fmt.Errorf("failed to open shard file: %w", err))
 		}
-
 		outFiles[i] = f
-		hashers[i] = sha256.New()
-		writers[i] = io.MultiWriter(f, hashers[i])
 	}
+
+	var allSplits []models.Split
+	var splitsMu sync.Mutex
+	chunkIndex := 0
 
 	buf := make([]byte, ChunkSize)
 	for {
@@ -73,16 +74,36 @@ func EncodeFile(reader io.Reader, fileID string, NodeDirs []string) error {
 
 		var wg sync.WaitGroup
 		errCh := make(chan error, TotalShards)
+
 		for i, shard := range shards {
 			wg.Add(1)
-			go func(i int, shard []byte) {
+			go func(i int, shard []byte, currentChunkIndex int) {
 				defer wg.Done()
 
-				if _, err := writers[i].Write(shard); err != nil {
+				if _, err := outFiles[i].Write(shard); err != nil {
 					errCh <- fmt.Errorf("failed to write shard %d: %w", i, err)
+					return
 				}
-			}(i, shard)
+
+				hashUint := xxh3.Hash(shard)
+				
+
+				shardRecord := models.Split{
+					ID:         uuid.New().String(),
+					FileID:     fileID,
+					ShardID:    shardIds[i],
+					ChunkIndex: currentChunkIndex,
+					Hash:       hashUint,
+					Size:       int64(len(shard)),
+				}
+
+				splitsMu.Lock()
+				allSplits = append(allSplits, shardRecord)
+				splitsMu.Unlock()
+
+			}(i, shard, chunkIndex)
 		}
+
 		wg.Wait()
 		close(errCh)
 		for err := range errCh {
@@ -90,6 +111,7 @@ func EncodeFile(reader io.Reader, fileID string, NodeDirs []string) error {
 				return cleanupFailedUpload(outFiles, fileID, NodeDirs, err)
 			}
 		}
+		chunkIndex++
 	}
 
 	for _, f := range outFiles {
@@ -107,19 +129,20 @@ func EncodeFile(reader io.Reader, fileID string, NodeDirs []string) error {
 			return err
 		}
 
-		checksum := fmt.Sprintf("%x", hashers[i].Sum(nil))
-
 		shardRecords = append(shardRecords, models.Shard{
-			Id:       uuid.New().String(),
-			FileID:   fileID,
-			Index:    i,
-			Path:     finalPath,
-			Checksum: checksum,
+			Id:         shardIds[i],
+			FileID:     fileID,
+			ShardIndex: i,
+			Path:       finalPath,
 		})
 	}
 
 	if err := models.CreateShards(shardRecords); err != nil {
 		return fmt.Errorf("failed to save shard metadata: %v", err)
+	}
+
+	if err := models.CreateBulkSplit(allSplits); err != nil {
+		return fmt.Errorf("failed to save split metadata: %v", err)
 	}
 
 	return nil
